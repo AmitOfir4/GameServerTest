@@ -17,8 +17,8 @@
 
 ### Data Sets
 - Player p1: level 7, coins 1200
-- Reward r1: minLevel 5, cost 800
-- Reward r2: minLevel 2, cost 200
+- Reward goldenNetReward: minLevel 5, cost 800
+- Reward luckyBaitReward: minLevel 2, cost 200
 
 ### Assertions
 - HTTP status and response body

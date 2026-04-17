@@ -15,7 +15,7 @@ describe("E2E player lifecycle", () => {
             .post("/api/v1/rewards/claim")
             .set("Authorization", `Bearer ${auth.token}`)
             .set("Idempotency-Key", "flow-1")
-            .send({ rewardId: "r1" });
+            .send({ rewardId: "goldenNetReward" });
         expect(claim.status).toBe(201);
         expect(claim.body.status).toBe("claimed");
         const player = await client

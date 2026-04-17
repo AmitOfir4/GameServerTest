@@ -90,7 +90,7 @@ curl -s -X POST http://localhost:3001/api/v1/rewards/claim \
    -H "Authorization: Bearer <TOKEN>" \
    -H "Idempotency-Key: practice-1" \
    -H "Content-Type: application/json" \
-   -d '{"rewardId":"r2"}'
+   -d '{"rewardId":"luckyBaitReward"}'
 ```
 
 ## Suggested Interview Walkthrough

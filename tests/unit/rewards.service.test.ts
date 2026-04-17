@@ -6,7 +6,7 @@ describe("RewardsService", () => {
     const store = new DataStore();
     const service = new RewardsService(store);
 
-    const result = service.claimReward("p1", "r1", "idem-1");
+    const result = service.claimReward("p1", "goldenNetReward", "idem-1");
 
     expect(result.status).toBe("claimed");
     expect(result.player.coins).toBe(400);
@@ -17,8 +17,8 @@ describe("RewardsService", () => {
     const store = new DataStore();
     const service = new RewardsService(store);
 
-    service.claimReward("p1", "r2", "idem-2");
-    const second = service.claimReward("p1", "r2", "idem-2");
+    service.claimReward("p1", "luckyBaitReward", "idem-2");
+    const second = service.claimReward("p1", "luckyBaitReward", "idem-2");
 
     expect(second.status).toBe("duplicate");
   });
@@ -27,9 +27,9 @@ describe("RewardsService", () => {
     const store = new DataStore();
     const service = new RewardsService(store);
 
-    service.claimReward("p1", "r2", "idem-3");
+    service.claimReward("p1", "luckyBaitReward", "idem-3");
 
-    expect(() => service.claimReward("p1", "r1", "idem-3")).toThrow(
+    expect(() => service.claimReward("p1", "goldenNetReward", "idem-3")).toThrow(
       "Idempotency-Key already used with different payload"
     );
   });

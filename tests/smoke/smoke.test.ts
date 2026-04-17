@@ -82,7 +82,7 @@ describe("[smoke] rewards", () => {
       .post("/api/v1/rewards/claim")
       .set("Authorization", `Bearer ${auth.token}`)
       .set("Idempotency-Key", "smoke-claim-1")
-      .send({ rewardId: "r2" });
+      .send({ rewardId: "luckyBaitReward" });
 
     expect(res.status).toBe(201);
     expect(res.body.status).toBe("claimed");

@@ -9,12 +9,12 @@ describe("Reward claim integration", () => {
             .post("/api/v1/rewards/claim")
             .set("Authorization", `Bearer ${auth.token}`)
             .set("Idempotency-Key", "req-1")
-            .send({ rewardId: "r2" });
+            .send({ rewardId: "luckyBaitReward" });
         const second = await client
             .post("/api/v1/rewards/claim")
             .set("Authorization", `Bearer ${auth.token}`)
             .set("Idempotency-Key", "req-1")
-            .send({ rewardId: "r2" });
+            .send({ rewardId: "luckyBaitReward" });
         expect(first.status).toBe(201);
         expect(first.body.status).toBe("claimed");
         expect(second.status).toBe(201);
@@ -26,7 +26,7 @@ describe("Reward claim integration", () => {
         const response = await client
             .post("/api/v1/rewards/claim")
             .set("Authorization", `Bearer ${auth.token}`)
-            .send({ rewardId: "r1" });
+            .send({ rewardId: "goldenNetReward" });
         expect(response.status).toBe(400);
         expect(response.body.error).toBe("Idempotency-Key header is required");
     });
@@ -37,44 +37,44 @@ describe("Reward claim integration", () => {
             .post("/api/v1/rewards/claim")
             .set("Authorization", `Bearer ${auth.token}`)
             .set("Idempotency-Key", "conflict-key")
-            .send({ rewardId: "r2" });
+            .send({ rewardId: "luckyBaitReward" });
         const conflict = await client
             .post("/api/v1/rewards/claim")
             .set("Authorization", `Bearer ${auth.token}`)
             .set("Idempotency-Key", "conflict-key")
-            .send({ rewardId: "r1" });
+            .send({ rewardId: "goldenNetReward" });
         expect(conflict.status).toBe(409);
         expect(conflict.body.error).toBe("Idempotency-Key already used with different payload");
     });
     it("returns 422 when player level is too low for reward", async () => {
         const { client } = (0, test_app_1.loadTestApp)();
-        // dory is level 3; r1 requires minLevel 5
+        // dory is level 3; goldenNetReward requires minLevel 5
         const loginRes = await client.post("/api/v1/auth/login").send({ username: "dory" });
         const { token, playerId } = loginRes.body;
         const response = await client
             .post("/api/v1/rewards/claim")
             .set("Authorization", `Bearer ${token}`)
             .set("Idempotency-Key", "level-key")
-            .send({ rewardId: "r1" });
+            .send({ rewardId: "goldenNetReward" });
         expect(response.status).toBe(422);
         expect(response.body.error).toBe("Player level too low for reward");
     });
     it("returns 422 when player has insufficient coins for reward", async () => {
         const { client } = (0, test_app_1.loadTestApp)();
-        // dory has 300 coins; r1 costs 800
+        // dory has 300 coins; goldenNetReward costs 800
         const loginRes = await client.post("/api/v1/auth/login").send({ username: "dory" });
         const { token } = loginRes.body;
-        // dory level 3, r2 costs 200 and requires level 2 — first drain coins
+        // dory level 3, luckyBaitReward costs 200 and requires level 2 — first drain coins
         await client
             .post("/api/v1/rewards/claim")
             .set("Authorization", `Bearer ${token}`)
             .set("Idempotency-Key", "drain-coins")
-            .send({ rewardId: "r2" }); // costs 200, dory now has 100 coins
+            .send({ rewardId: "luckyBaitReward" }); // costs 200, dory now has 100 coins
         const response = await client
             .post("/api/v1/rewards/claim")
             .set("Authorization", `Bearer ${token}`)
             .set("Idempotency-Key", "broke-key")
-            .send({ rewardId: "r2" }); // costs 200, dory only has 100
+            .send({ rewardId: "luckyBaitReward" }); // costs 200, dory only has 100
         expect(response.status).toBe(422);
         expect(response.body.error).toBe("Insufficient balance for reward");
     });
@@ -89,12 +89,12 @@ describe("Reward claim integration", () => {
                 .post("/api/v1/rewards/claim")
                 .set("Authorization", `Bearer ${auth.token}`)
                 .set("Idempotency-Key", "concurrent-key")
-                .send({ rewardId: "r2" }),
+                .send({ rewardId: "luckyBaitReward" }),
             client
                 .post("/api/v1/rewards/claim")
                 .set("Authorization", `Bearer ${auth.token}`)
                 .set("Idempotency-Key", "concurrent-key")
-                .send({ rewardId: "r2" })
+                .send({ rewardId: "luckyBaitReward" })
         ]);
         expect(a.status).toBe(201);
         expect(b.status).toBe(201);

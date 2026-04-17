@@ -34,13 +34,13 @@ describe("PostgreSQL integration", () => {
         .post("/api/v1/rewards/claim")
         .set("Authorization", `Bearer ${token}`)
         .set("Idempotency-Key", "same-key")
-        .send({ rewardId: "r2" });
+        .send({ rewardId: "luckyBaitReward" });
 
       const second = await request(db.app)
         .post("/api/v1/rewards/claim")
         .set("Authorization", `Bearer ${token}`)
         .set("Idempotency-Key", "same-key")
-        .send({ rewardId: "r2" });
+        .send({ rewardId: "luckyBaitReward" });
 
       expect(first.status).toBe(201);
       expect(first.body.status).toBe("claimed");
@@ -68,12 +68,12 @@ describe("PostgreSQL integration", () => {
           .post("/api/v1/rewards/claim")
           .set("Authorization", `Bearer ${token}`)
           .set("Idempotency-Key", "race-key")
-          .send({ rewardId: "r2" }),
+          .send({ rewardId: "luckyBaitReward" }),
         request(db.app)
           .post("/api/v1/rewards/claim")
           .set("Authorization", `Bearer ${token}`)
           .set("Idempotency-Key", "race-key")
-          .send({ rewardId: "r2" })
+          .send({ rewardId: "luckyBaitReward" })
       ]);
 
       const statuses = [a.body.status, b.body.status].sort();
