@@ -15,6 +15,7 @@
     "test:e2e": "jest --selectProjects e2e",
     "test:contract": "jest --selectProjects contract",
     "test:db": "jest --selectProjects db",
+    "test:smoke": "jest --selectProjects smoke",
     "lint": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

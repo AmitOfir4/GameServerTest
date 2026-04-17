@@ -6,6 +6,14 @@ const common: Config = {
   roots: ["<rootDir>/tests"],
   moduleFileExtensions: ["ts", "js", "json"],
   collectCoverageFrom: ["src/**/*.ts", "!src/server.ts", "!src/scripts/run-db-api.ts"],
+  coverageThreshold: {
+    global: {
+      branches: 75,
+      functions: 85,
+      lines: 85,
+      statements: 85
+    }
+  },
   clearMocks: true
 };
 
@@ -35,6 +43,11 @@ const config: Config = {
       ...common,
       displayName: "db",
       testMatch: ["<rootDir>/tests/db/**/*.test.ts"]
+    },
+    {
+      ...common,
+      displayName: "smoke",
+      testMatch: ["<rootDir>/tests/smoke/**/*.test.ts"]
     }
   ]
 };
