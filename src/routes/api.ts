@@ -46,7 +46,7 @@ export function apiRouter(store: DataStore, deps: Required<AppDependencies>): Ro
     }
 
     playersService.setCoins(playerId, coins);
-    res.status(204).json({"message": "Player coins updated successfully" });
+    res.status(200).json({ status: "success", message: "Player coins updated successfully" });
   });
 
   router.post("/spins", authMiddleware(store), (req, res) => {
