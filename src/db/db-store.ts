@@ -255,4 +255,15 @@ export class DbStore {
       client.release();
     }
   }
+
+  async setPlayerCoins(playerId: string, coins: number): Promise<void> {
+    const result = await this.pool.query(
+      "UPDATE players SET coins = $1 WHERE id = $2",
+      [coins, playerId]
+    );
+
+    if (result.rowCount === 0) {
+      throw new ApiError(404, "Player not found");
+    }
+  }
 }

@@ -37,16 +37,6 @@ export function apiRouter(store: DataStore, deps: Required<AppDependencies>): Ro
     res.json(player);
   });
 
-  router.put("/players/:id/coins", authMiddleware(store), (req, res) => {
-    const playerId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    const { coins } = req.body;
-    if (typeof coins !== "number" || coins < 0) {
-      throw new ApiError(400, "Invalid coins value");
-    }
-    playersService.setPlayerCoins(playerId, coins);
-    res.status(204).send();
-  });
-
   router.post("/spins", authMiddleware(store), (req, res) => {
     const payload = spinSchema.safeParse(req.body);
     if (!payload.success) {

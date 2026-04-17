@@ -46,7 +46,7 @@ export function apiDbRouter(store: DbStore, deps: Required<AppDependencies>): Ro
     "/players/:id",
     authDbMiddleware(store),
     asyncHandler(async (req, res) => {
-      const playerId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const playerId = Array.isArray(req.params.id) ? req.params.id[0] : String(req.params.id);
       const player = await playersService.getPlayer(playerId);
       res.json(player);
     })
@@ -86,6 +86,22 @@ export function apiDbRouter(store: DbStore, deps: Required<AppDependencies>): Ro
       const idempotencyKey = req.header("Idempotency-Key") ?? "";
       const result = await rewardsService.claimReward(req.playerId, payload.data.rewardId, idempotencyKey);
       res.status(201).json(result);
+    })
+  );
+
+  router.patch(
+    "/players/:id/coins",
+    authDbMiddleware(store),
+    asyncHandler(async (req, res) => {
+      const playerId = String(req.params.id);
+      const { coins } = req.body;
+
+      if (typeof coins !== "number" || coins < 0) {
+        throw new ApiError(400, "Invalid coins value");
+      }
+
+      await playersService.setCoins(playerId, coins);
+      res.status(204).send();
     })
   );
 
