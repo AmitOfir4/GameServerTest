@@ -95,4 +95,14 @@ export class DataStore {
     this.claimsByIdempotencyKey.set(record.idempotencyKey, { ...record });
     return { ...record };
   }
+
+  setPlayerCoins(playerId: string, coins: number): void {
+    const player = this.players.get(playerId);
+    if (!player) {
+      throw new ApiError(404, "Player not found");
+    }
+
+    player.coins = coins;
+    this.players.set(playerId, { ...player, inventory: [...player.inventory] });
+  }
 }

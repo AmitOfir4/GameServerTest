@@ -7,4 +7,8 @@ export class PlayersService {
     return this.store.getPlayerById(playerId);
   }
 
+  setCoins(playerId: string, coins: number): void {
+    return this.store.setPlayerCoins(playerId, coins);
+  };
+
 }
