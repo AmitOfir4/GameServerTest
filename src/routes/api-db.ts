@@ -10,6 +10,7 @@ import { SpinsDbService } from "../modules/spins/spins.db.service";
 import { AppDependencies } from "../types";
 import { claimSchema, loginSchema, spinSchema } from "../validation/schemas";
 import { query } from '../utils/db';
+import { uuid } from "zod/v4";
 
 export function apiDbRouter(store: DbStore, deps: Required<AppDependencies>): Router {
   const router = Router();
@@ -83,7 +84,11 @@ export function apiDbRouter(store: DbStore, deps: Required<AppDependencies>): Ro
         throw new ApiError(401, "Unauthorized");
       }
 
-      const idempotencyKey = req.header("Idempotency-Key") ?? "";
+      const idempotencyKey = req.header("Idempotency-Key")
+      if (!idempotencyKey) {
+        throw new ApiError(400, "Idempotency-Key header is required");
+      }
+
       const result = await rewardsService.claimReward(req.playerId, payload.data.rewardId, idempotencyKey);
       res.status(201).json(result);
     })

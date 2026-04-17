@@ -75,6 +75,10 @@ export function apiRouter(store: DataStore, deps: Required<AppDependencies>): Ro
     }
 
     const idempotencyKey = req.header("Idempotency-Key") || uuid();
+    if (!idempotencyKey) {
+      throw new ApiError(400, "Idempotency-Key header is required");
+    }
+
     const result = rewardsService.claimReward(req.playerId, payload.data.rewardId, idempotencyKey);
     res.status(201).json(result);
   });
