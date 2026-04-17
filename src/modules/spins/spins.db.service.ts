@@ -15,7 +15,7 @@ export class SpinsDbService {
       throw new ApiError(422, "Insufficient balance");
     }
 
-    const didWin = this.rng() >= 0.75; 
+    const didWin = this.rng() >= 0.55; 
     const deltaCoins = didWin ? betAmount * 2 : -betAmount;
     player.coins += deltaCoins;
     await this.store.updatePlayer(player);
