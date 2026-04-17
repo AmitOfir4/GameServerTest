@@ -8,6 +8,7 @@ import { authMiddleware } from "../middleware/auth";
 import { claimSchema, loginSchema, spinSchema } from "../validation/schemas";
 import { ApiError } from "../core/errors";
 import { AppDependencies } from "../types";
+import { v4 as uuid } from "uuid";
 
 export function apiRouter(store: DataStore, deps: Required<AppDependencies>): Router {
   const router = Router();
@@ -73,7 +74,7 @@ export function apiRouter(store: DataStore, deps: Required<AppDependencies>): Ro
       throw new ApiError(401, "Unauthorized");
     }
 
-    const idempotencyKey = req.header("Idempotency-Key") ?? "";
+    const idempotencyKey = req.header("Idempotency-Key") || uuid();
     const result = rewardsService.claimReward(req.playerId, payload.data.rewardId, idempotencyKey);
     res.status(201).json(result);
   });

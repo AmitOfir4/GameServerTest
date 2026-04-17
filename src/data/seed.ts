@@ -8,14 +8,14 @@ export function defaultState(): StoreState {
         username: "nemo",
         level: 7,
         coins: 1200,
-        inventory: ["bronze-chest"]
+        inventory: { "bronze-chest": 1 }
       },
       {
         id: "p2",
         username: "dory",
         level: 3,
         coins: 300,
-        inventory: []
+        inventory: {}
       }
     ],
     rewards: [

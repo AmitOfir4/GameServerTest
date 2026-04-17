@@ -17,7 +17,7 @@ describe("PostgreSQL integration", () => {
 
       expect(player.status).toBe(200);
       expect(player.body.username).toBe("nemo");
-      expect(player.body.inventory).toContain("bronze-chest");
+      expect(player.body.inventory["bronze-chest"]).toBe(1);
     } finally {
       await db.close();
     }

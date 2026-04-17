@@ -3,7 +3,7 @@ export interface Player {
   username: string;
   level: number;
   coins: number;
-  inventory: string[];
+  inventory: Inventory;
 }
 
 export interface Reward {
@@ -40,3 +40,5 @@ export interface AppDependencies {
   rng?: () => number;
   now?: () => Date;
 }
+
+export type Inventory = Record<string, number>;

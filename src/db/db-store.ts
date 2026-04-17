@@ -9,7 +9,10 @@ function mapPlayer(row: { id: string; username: string; level: number; coins: nu
     username: row.username,
     level: row.level,
     coins: row.coins,
-    inventory: row.inventory ?? []
+    inventory: row.inventory.reduce((acc: Record<string, number>, item: string) => {
+      acc[item] = (acc[item] || 0) + 1;
+      return acc;
+    }, {})
   };
 }
 
@@ -67,8 +70,10 @@ export class DbStore {
       }
 
       await client.query("DELETE FROM inventory WHERE player_id = $1", [player.id]);
-      for (const item of player.inventory) {
-        await client.query("INSERT INTO inventory(player_id, item_name) VALUES($1, $2)", [player.id, item]);
+      for (const [item, count] of Object.entries(player.inventory)) {
+        for (let i = 0; i < count; i++) {
+          await client.query("INSERT INTO inventory(player_id, item_name) VALUES($1, $2)", [player.id, item]);
+        }
       }
 
       await client.query("COMMIT");
@@ -87,7 +92,7 @@ export class DbStore {
       id: row.id,
       name: row.name,
       minLevel: row.min_level,
-      costCoins: row.cost_coins
+      costCoins: row.cost_coins,
     }));
   }
 
@@ -102,7 +107,7 @@ export class DbStore {
       id: row.id,
       name: row.name,
       minLevel: row.min_level,
-      costCoins: row.cost_coins
+      costCoins: row.cost_coins,
     };
   }
 
@@ -116,7 +121,7 @@ export class DbStore {
     return {
       token: result.rows[0].token,
       playerId: result.rows[0].player_id,
-      createdAt: new Date(result.rows[0].created_at).toISOString()
+      createdAt: new Date(result.rows[0].created_at).toISOString(),
     };
   }
 
@@ -129,7 +134,7 @@ export class DbStore {
     return {
       token: result.rows[0].token,
       playerId: result.rows[0].player_id,
-      createdAt: new Date(result.rows[0].created_at).toISOString()
+      createdAt: new Date(result.rows[0].created_at).toISOString(),
     };
   }
 
@@ -146,7 +151,7 @@ export class DbStore {
     return {
       playerId: result.rows[0].player_id,
       rewardId: result.rows[0].reward_id,
-      idempotencyKey: result.rows[0].idempotency_key
+      idempotencyKey: result.rows[0].idempotency_key,
     };
   }
 
@@ -187,7 +192,7 @@ export class DbStore {
         return {
           status: "duplicate",
           player: await this.getPlayerById(playerId),
-          reward: await this.getRewardById(rewardId)
+          reward: await this.getRewardById(rewardId),
         };
       }
 
@@ -230,8 +235,8 @@ export class DbStore {
           id: reward.id,
           name: reward.name,
           minLevel: reward.min_level,
-          costCoins: reward.cost_coins
-        }
+          costCoins: reward.cost_coins,
+        },
       };
     } catch (err) {
       await client.query("ROLLBACK");

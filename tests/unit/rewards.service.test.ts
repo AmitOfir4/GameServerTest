@@ -10,7 +10,7 @@ describe("RewardsService", () => {
 
     expect(result.status).toBe("claimed");
     expect(result.player.coins).toBe(400);
-    expect(result.player.inventory).toContain("golden-net");
+    expect(result.player.inventory["golden-net"]).toBe(1);
   });
 
   it("returns duplicate for same idempotency key and payload", () => {

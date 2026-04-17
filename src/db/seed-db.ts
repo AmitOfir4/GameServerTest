@@ -13,8 +13,10 @@ export async function seedDatabase(pool: Pool): Promise<void> {
       player.coins
     ]);
 
-    for (const item of player.inventory) {
-      await pool.query("INSERT INTO inventory(player_id, item_name) VALUES($1, $2)", [player.id, item]);
+    for (const [item, count] of Object.entries(player.inventory)) {
+      for (let i = 0; i < count; i++) {
+        await pool.query("INSERT INTO inventory(player_id, item_name) VALUES($1, $2)", [player.id, item]);
+      }
     }
   }
 

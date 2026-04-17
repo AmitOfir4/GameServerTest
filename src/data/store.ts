@@ -10,14 +10,14 @@ export class DataStore {
   private claimsByIdempotencyKey: Map<string, ClaimRecord>;
 
   constructor(initialState: StoreState = defaultState()) {
-    this.players = new Map(initialState.players.map((p) => [p.id, { ...p, inventory: [...p.inventory] }]));
+    this.players = new Map(initialState.players.map((p) => [p.id, { ...p, inventory: { ...p.inventory } }]));
     this.rewards = new Map(initialState.rewards.map((r) => [r.id, { ...r }]));
     this.sessions = new Map();
     this.claimsByIdempotencyKey = new Map();
   }
 
   reset(state: StoreState = defaultState()): void {
-    this.players = new Map(state.players.map((p) => [p.id, { ...p, inventory: [...p.inventory] }]));
+    this.players = new Map(state.players.map((p) => [p.id, { ...p, inventory: { ...p.inventory } }]));
     this.rewards = new Map(state.rewards.map((r) => [r.id, { ...r }]));
     this.sessions = new Map();
     this.claimsByIdempotencyKey = new Map();
@@ -29,13 +29,13 @@ export class DataStore {
       throw new ApiError(404, "Player not found");
     }
 
-    return { ...player, inventory: [...player.inventory] };
+    return { ...player, inventory: { ...player.inventory } };
   }
 
   getPlayerByUsername(username: string): Player | undefined {
     for (const player of this.players.values()) {
       if (player.username === username) {
-        return { ...player, inventory: [...player.inventory] };
+        return { ...player, inventory: { ...player.inventory } };
       }
     }
 
@@ -47,9 +47,9 @@ export class DataStore {
       throw new ApiError(404, "Player not found");
     }
 
-    const copy = { ...player, inventory: [...player.inventory] };
+    const copy = { ...player, inventory: { ...player.inventory } };
     this.players.set(player.id, copy);
-    return { ...copy, inventory: [...copy.inventory] };
+    return { ...copy, inventory: { ...copy.inventory } };
   }
 
   listRewards(): Reward[] {
@@ -103,6 +103,6 @@ export class DataStore {
     }
 
     player.coins = coins;
-    this.players.set(playerId, { ...player, inventory: [...player.inventory] });
+    this.players.set(playerId, { ...player, inventory: { ...player.inventory } });
   }
 }

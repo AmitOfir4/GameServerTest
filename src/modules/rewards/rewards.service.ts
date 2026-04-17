@@ -35,7 +35,10 @@ export class RewardsService {
     }
 
     player.coins -= reward.costCoins;
-    player.inventory.push(reward.name);
+    if (!player.inventory[reward.name]) {
+      player.inventory[reward.name] = 0;
+    }
+    player.inventory[reward.name] += 1;
     this.store.updatePlayer(player);
     this.store.saveClaim({ playerId, rewardId, idempotencyKey });
 
