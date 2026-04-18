@@ -10,7 +10,7 @@ describe("E2E player lifecycle", () => {
       .set("Authorization", `Bearer ${auth.token}`)
       .send({ betAmount: 100 });
 
-    expect(spin.status).toBe(201);
+    expect(spin.status).toBe(200);
     expect(spin.body.outcome).toBe("win");
 
     const claim = await client

@@ -10,7 +10,7 @@ describe("Spins integration - boundary & validation", () => {
       .set("Authorization", `Bearer ${auth.token}`)
       .send({ betAmount: 1 });
 
-    expect(response.status).toBe(201);
+    expect(response.status).toBe(200);
     expect(response.body.outcome).toBe("win");
   });
 

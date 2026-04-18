@@ -9,6 +9,7 @@ import { claimSchema, loginSchema, spinSchema } from "../validation/schemas";
 import { ApiError } from "../core/errors";
 import { AppDependencies } from "../types";
 import { v4 as uuid } from "uuid";
+import { LuckyScratchService } from "../modules/luckyScratch/luckyScratch.service";
 
 export function apiRouter(store: DataStore, deps: Required<AppDependencies>): Router {
   const router = Router();
@@ -61,7 +62,17 @@ export function apiRouter(store: DataStore, deps: Required<AppDependencies>): Ro
     }
 
     const result = spinsService.spin(req.playerId, payload.data.betAmount);
-    res.status(201).json(result);
+    res.status(200).json(result);
+  });
+
+  router.post("/lucky-scratch/scratch", authMiddleware(store), (req, res) => {
+    if (!req.playerId) {
+      throw new ApiError(401, "Unauthorized");
+    }
+
+    const luckyScratchService = new LuckyScratchService(store);
+    const result = luckyScratchService.scratch(req.playerId);
+    res.status(200).json(result);
   });
 
   router.post("/rewards/claim", authMiddleware(store), (req, res) => {
