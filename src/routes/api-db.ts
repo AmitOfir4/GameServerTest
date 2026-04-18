@@ -16,9 +16,9 @@ export function apiDbRouter(store: DbStore, deps: Required<AppDependencies>): Ro
 
   const asyncHandler =
     (handler: (req: Request, res: Response, next: NextFunction) => Promise<void>) =>
-    (req: Request, res: Response, next: NextFunction): void => {
-      void handler(req, res, next).catch(next);
-    };
+      (req: Request, res: Response, next: NextFunction): void => {
+        void handler(req, res, next).catch(next);
+      };
 
   const authService = new AuthDbService(store, deps.now);
   const playersService = new PlayersDbService(store);
@@ -33,13 +33,13 @@ export function apiDbRouter(store: DbStore, deps: Required<AppDependencies>): Ro
   router.post(
     "/auth/login",
     asyncHandler(async (req, res) => {
-    const payload = loginSchema.safeParse(req.body);
-    if (!payload.success) {
-      throw new ApiError(400, "Invalid payload", payload.error.flatten());
-    }
+      const payload = loginSchema.safeParse(req.body);
+      if (!payload.success) {
+        throw new ApiError(400, "Invalid payload", payload.error.flatten());
+      }
 
-    const session = await authService.login(payload.data.username);
-    res.json({ token: session.token, playerId: session.playerId });
+      const session = await authService.login(payload.data.username);
+      res.json({ token: session.token, playerId: session.playerId });
     })
   );
 
