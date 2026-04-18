@@ -2,7 +2,7 @@ import { loadTestApp, loginAsNemo } from "../helpers/test-app";
 
 describe("E2E player lifecycle", () => {
   it("login -> spin -> claim reward -> verify player state", async () => {
-    const { client } = loadTestApp({ rng: () => 0.9 });
+    const { client } = await loadTestApp({ rng: () => 0.9 });
     const auth = await loginAsNemo(client);
 
     const spin = await client

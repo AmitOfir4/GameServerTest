@@ -1,7 +1,7 @@
 import request from "supertest";
 import { setupDbTestApp } from "./testcontainer";
 
-describe("PostgreSQL integration", () => {
+describe("MongoDB integration", () => {
   jest.setTimeout(120000);
 
   it("logs in and fetches player from database", async () => {
@@ -47,10 +47,8 @@ describe("PostgreSQL integration", () => {
       expect(second.status).toBe(201);
       expect(second.body.status).toBe("duplicate");
 
-      const claimsCount = await db.pool.query("SELECT COUNT(*)::int AS count FROM reward_claims WHERE idempotency_key = $1", [
-        "same-key"
-      ]);
-      expect(claimsCount.rows[0].count).toBe(1);
+      const claimsCount = await db.mongoDb.collection<{ _id: string }>("rewardClaims").countDocuments({ _id: "same-key" });
+      expect(claimsCount).toBe(1);
     } finally {
       await db.close();
     }
@@ -81,10 +79,8 @@ describe("PostgreSQL integration", () => {
       expect(b.status).toBe(201);
       expect(statuses).toEqual(["claimed", "duplicate"]);
 
-      const claimsCount = await db.pool.query("SELECT COUNT(*)::int AS count FROM reward_claims WHERE idempotency_key = $1", [
-        "race-key"
-      ]);
-      expect(claimsCount.rows[0].count).toBe(1);
+      const claimsCount = await db.mongoDb.collection<{ _id: string }>("rewardClaims").countDocuments({ _id: "race-key" });
+      expect(claimsCount).toBe(1);
     } finally {
       await db.close();
     }

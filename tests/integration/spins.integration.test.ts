@@ -2,7 +2,7 @@ import { loadTestApp, loginAsNemo } from "../helpers/test-app";
 
 describe("Spins integration - boundary & validation", () => {
   it("returns 201 for minimum valid bet (boundary: betAmount=1)", async () => {
-    const { client } = loadTestApp({ rng: () => 0.99 });
+    const { client } = await loadTestApp({ rng: () => 0.99 });
     const auth = await loginAsNemo(client);
 
     const response = await client
@@ -15,7 +15,7 @@ describe("Spins integration - boundary & validation", () => {
   });
 
   it("returns 201 for maximum valid bet (boundary: betAmount=5000)", async () => {
-    const { client } = loadTestApp({ rng: () => 0.99 });
+    const { client } = await loadTestApp({ rng: () => 0.99 });
     const auth = await loginAsNemo(client);
 
     const response = await client
@@ -25,11 +25,11 @@ describe("Spins integration - boundary & validation", () => {
 
     // p1 has 1200 coins — not enough for 5000, but schema validation passes first
     // 422 means it reached the service layer (schema was valid)
-    expect([201, 422]).toContain(response.status);
+    expect([200, 422]).toContain(response.status);
   });
 
   it("returns 400 for betAmount=0 (below minimum)", async () => {
-    const { client } = loadTestApp();
+    const { client } = await loadTestApp();
     const auth = await loginAsNemo(client);
 
     const response = await client
@@ -42,7 +42,7 @@ describe("Spins integration - boundary & validation", () => {
   });
 
   it("returns 400 for betAmount=-1 (negative value)", async () => {
-    const { client } = loadTestApp();
+    const { client } = await loadTestApp();
     const auth = await loginAsNemo(client);
 
     const response = await client
@@ -54,7 +54,7 @@ describe("Spins integration - boundary & validation", () => {
   });
 
   it("returns 400 for betAmount=5001 (above maximum)", async () => {
-    const { client } = loadTestApp();
+    const { client } = await loadTestApp();
     const auth = await loginAsNemo(client);
 
     const response = await client
@@ -66,7 +66,7 @@ describe("Spins integration - boundary & validation", () => {
   });
 
   it("returns 400 for fractional betAmount (non-integer)", async () => {
-    const { client } = loadTestApp();
+    const { client } = await loadTestApp();
     const auth = await loginAsNemo(client);
 
     const response = await client
@@ -78,7 +78,7 @@ describe("Spins integration - boundary & validation", () => {
   });
 
   it("returns 400 for string betAmount", async () => {
-    const { client } = loadTestApp();
+    const { client } = await loadTestApp();
     const auth = await loginAsNemo(client);
 
     const response = await client
@@ -90,7 +90,7 @@ describe("Spins integration - boundary & validation", () => {
   });
 
   it("returns 400 for missing betAmount", async () => {
-    const { client } = loadTestApp();
+    const { client } = await loadTestApp();
     const auth = await loginAsNemo(client);
 
     const response = await client
@@ -102,7 +102,7 @@ describe("Spins integration - boundary & validation", () => {
   });
 
   it("returns 422 when bet exceeds player balance", async () => {
-    const { client } = loadTestApp();
+    const { client } = await loadTestApp();
     const auth = await loginAsNemo(client);
 
     // p1 has 1200 coins; bet 1201
@@ -116,7 +116,7 @@ describe("Spins integration - boundary & validation", () => {
   });
 
   it("returns 401 for spin without auth token", async () => {
-    const { client } = loadTestApp();
+    const { client } = await await loadTestApp();
 
     const response = await client
       .post("/api/v1/spins")

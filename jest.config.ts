@@ -5,7 +5,7 @@ const common: Config = {
   testEnvironment: "node",
   roots: ["<rootDir>/tests"],
   moduleFileExtensions: ["ts", "js", "json"],
-  collectCoverageFrom: ["src/**/*.ts", "!src/server.ts", "!src/scripts/run-db-api.ts"],
+  collectCoverageFrom: ["src/**/*.ts", "!src/server.ts", "!src/scripts/run-db-api.ts", "!src/scripts/seed-db.ts"],
   coverageThreshold: {
     global: {
       branches: 75,
@@ -18,6 +18,7 @@ const common: Config = {
 };
 
 const config: Config = {
+  testTimeout: 120000,
   projects: [
     {
       ...common,

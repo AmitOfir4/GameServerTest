@@ -6,7 +6,7 @@ import { loadTestApp, loginAsNemo } from "../helpers/test-app";
 
 describe("[smoke] health check", () => {
   it("GET /health returns ok", async () => {
-    const { client } = loadTestApp();
+    const { client } = await loadTestApp();
 
     const res = await client.get("/api/v1/health");
 
@@ -17,7 +17,7 @@ describe("[smoke] health check", () => {
 
 describe("[smoke] auth", () => {
   it("POST /auth/login succeeds for a known player", async () => {
-    const { client } = loadTestApp();
+    const { client } = await loadTestApp();
 
     const res = await client.post("/api/v1/auth/login").send({ username: "nemo" });
 
@@ -27,7 +27,7 @@ describe("[smoke] auth", () => {
   });
 
   it("POST /auth/login returns 401 for unknown player", async () => {
-    const { client } = loadTestApp();
+    const { client } = await loadTestApp();
 
     const res = await client.post("/api/v1/auth/login").send({ username: "ghost" });
 
@@ -37,7 +37,7 @@ describe("[smoke] auth", () => {
 
 describe("[smoke] player", () => {
   it("GET /players/:id returns player data for authenticated request", async () => {
-    const { client } = loadTestApp();
+    const { client } = await loadTestApp();
     const auth = await loginAsNemo(client);
 
     const res = await client
@@ -49,7 +49,7 @@ describe("[smoke] player", () => {
   });
 
   it("GET /players/:id returns 401 without token", async () => {
-    const { client } = loadTestApp();
+    const { client } = await loadTestApp();
 
     const res = await client.get("/api/v1/players/p1");
 
@@ -59,7 +59,7 @@ describe("[smoke] player", () => {
 
 describe("[smoke] spins", () => {
   it("POST /spins returns spin result", async () => {
-    const { client } = loadTestApp({ rng: () => 0.99 });
+    const { client } = await loadTestApp({ rng: () => 0.99 });
     const auth = await loginAsNemo(client);
 
     const res = await client
@@ -75,7 +75,7 @@ describe("[smoke] spins", () => {
 
 describe("[smoke] rewards", () => {
   it("POST /rewards/claim returns claimed status", async () => {
-    const { client } = loadTestApp();
+    const { client } = await loadTestApp();
     const auth = await loginAsNemo(client);
 
     const res = await client

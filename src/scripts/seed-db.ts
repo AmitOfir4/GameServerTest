@@ -1,20 +1,23 @@
 import 'dotenv/config';
 import { seedDatabase } from '../db/seed-db';
-import { createPgPool } from '../db/pg';
+import { createMongoDb } from '../db/mongo';
 
-if (!process.env.DATABASE_URL) {
-  throw new Error('DATABASE_URL is not defined in the environment variables');
+const uri = process.env.MONGODB_URI;
+if (!uri) {
+  throw new Error('MONGODB_URI is not defined in the environment variables');
 }
 
-const pool = createPgPool({ connectionString: process.env.DATABASE_URL });
-
-seedDatabase(pool)
-  .then(() => {
+async function main() {
+  const { client, db } = await createMongoDb({ connectionString: uri! });
+  try {
+    await seedDatabase(db);
     console.log('Database seeded successfully');
-  })
-  .catch((err) => {
-    console.error('Error seeding database:', err);
-  })
-  .finally(() => {
-    pool.end();
-  });
+  } finally {
+    await client.close();
+  }
+}
+
+main().catch((err) => {
+  console.error('Error seeding database:', err);
+  process.exit(1);
+});

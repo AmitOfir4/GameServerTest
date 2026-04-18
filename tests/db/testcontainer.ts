@@ -1,21 +1,16 @@
-import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql";
+import { MongoDBContainer, StartedMongoDBContainer } from "@testcontainers/mongodb";
 import { createDbApp, resetDb } from "../../src/app-db";
 
 export async function setupDbTestApp() {
-  const container: StartedPostgreSqlContainer = await new PostgreSqlContainer("postgres:16-alpine")
-    .withDatabase("testdb")
-    .withUsername("test")
-    .withPassword("test")
-    .start();
-
-  const connectionString = container.getConnectionUri();
+  const container: StartedMongoDBContainer = await new MongoDBContainer("mongo:7").start();
+  const connectionString = container.getConnectionString();
   const dbApp = await createDbApp({ connectionString, autoSeed: true });
 
   return {
     container,
     app: dbApp.app,
-    pool: dbApp.pool,
-    reset: async () => resetDb(dbApp.pool),
+    mongoDb: dbApp.mongoDb,
+    reset: async () => resetDb(dbApp.mongoDb),
     close: async () => {
       await dbApp.close();
       await container.stop();

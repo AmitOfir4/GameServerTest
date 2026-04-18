@@ -4,7 +4,7 @@ import { loadTestApp, loginAsNemo } from "../helpers/test-app";
 
 describe("Player API contract", () => {
   it("matches JSON schema", async () => {
-    const { client } = loadTestApp();
+    const { client } = await loadTestApp();
     const auth = await loginAsNemo(client);
 
     const response = await client

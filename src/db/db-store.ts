@@ -1,166 +1,133 @@
-import { Pool, PoolClient } from "pg";
+import { Collection, Db, MongoError } from "mongodb";
 import { v4 as uuid } from "uuid";
 import { ApiError } from "../core/errors";
 import { ClaimRecord, Player, Reward, Session } from "../types";
 
-function mapPlayer(row: { id: string; username: string; level: number; coins: number; inventory: string[] }): Player {
+interface PlayerDoc {
+  _id: string;
+  username: string;
+  level: number;
+  coins: number;
+  inventory: Record<string, number>;
+}
+
+interface RewardDoc {
+  _id: string;
+  name: string;
+  minLevel: number;
+  costCoins: number;
+}
+
+interface SessionDoc {
+  _id: string;
+  playerId: string;
+  createdAt: Date;
+}
+
+interface RewardClaimDoc {
+  _id: string;
+  playerId: string;
+  rewardId: string;
+}
+
+function mapPlayer(doc: PlayerDoc): Player {
   return {
-    id: row.id,
-    username: row.username,
-    level: row.level,
-    coins: row.coins,
-    inventory: row.inventory.reduce((acc: Record<string, number>, item: string) => {
-      acc[item] = (acc[item] || 0) + 1;
-      return acc;
-    }, {})
+    id: doc._id,
+    username: doc.username,
+    level: doc.level,
+    coins: doc.coins,
+    inventory: doc.inventory ?? {}
+  };
+}
+
+function mapReward(doc: RewardDoc): Reward {
+  return {
+    id: doc._id,
+    name: doc.name,
+    minLevel: doc.minLevel,
+    costCoins: doc.costCoins
   };
 }
 
 export class DbStore {
-  constructor(private readonly pool: Pool) {}
+  private readonly players: Collection<PlayerDoc>;
+  private readonly rewards: Collection<RewardDoc>;
+  private readonly sessions: Collection<SessionDoc>;
+  private readonly rewardClaims: Collection<RewardClaimDoc>;
+
+  constructor(private readonly db: Db) {
+    this.players = db.collection<PlayerDoc>("players");
+    this.rewards = db.collection<RewardDoc>("rewards");
+    this.sessions = db.collection<SessionDoc>("sessions");
+    this.rewardClaims = db.collection<RewardClaimDoc>("rewardClaims");
+  }
+
+  async setupIndexes(): Promise<void> {
+    await this.players.createIndex({ username: 1 }, { unique: true });
+    await this.sessions.createIndex({ playerId: 1 });
+    await this.rewardClaims.createIndex({ playerId: 1 });
+  }
 
   async getPlayerById(id: string): Promise<Player> {
-    const result = await this.pool.query(
-      `
-      SELECT p.id, p.username, p.level, p.coins,
-      COALESCE(array_remove(array_agg(i.item_name), NULL), '{}') AS inventory
-      FROM players p
-      LEFT JOIN inventory i ON i.player_id = p.id
-      WHERE p.id = $1
-      GROUP BY p.id
-      `,
-      [id]
-    );
-
-    if (result.rowCount === 0) {
-      throw new ApiError(404, "Player not found");
-    }
-
-    return mapPlayer(result.rows[0]);
+    const doc = await this.players.findOne({ _id: id });
+    if (!doc) throw new ApiError(404, "Player not found");
+    return mapPlayer(doc);
   }
 
   async getPlayerByUsername(username: string): Promise<Player | undefined> {
-    const result = await this.pool.query(
-      `
-      SELECT p.id, p.username, p.level, p.coins,
-      COALESCE(array_remove(array_agg(i.item_name), NULL), '{}') AS inventory
-      FROM players p
-      LEFT JOIN inventory i ON i.player_id = p.id
-      WHERE p.username = $1
-      GROUP BY p.id
-      `,
-      [username]
-    );
-
-    return result.rowCount ? mapPlayer(result.rows[0]) : undefined;
+    const doc = await this.players.findOne({ username });
+    return doc ? mapPlayer(doc) : undefined;
   }
 
   async updatePlayer(player: Player): Promise<Player> {
-    const client = await this.pool.connect();
-    try {
-      await client.query("BEGIN");
-
-      const updated = await client.query(
-        "UPDATE players SET username = $1, level = $2, coins = $3 WHERE id = $4 RETURNING id, username, level, coins",
-        [player.username, player.level, player.coins, player.id]
-      );
-
-      if (updated.rowCount === 0) {
-        throw new ApiError(404, "Player not found");
-      }
-
-      await client.query("DELETE FROM inventory WHERE player_id = $1", [player.id]);
-      for (const [item, count] of Object.entries(player.inventory)) {
-        for (let i = 0; i < count; i++) {
-          await client.query("INSERT INTO inventory(player_id, item_name) VALUES($1, $2)", [player.id, item]);
-        }
-      }
-
-      await client.query("COMMIT");
-      return this.getPlayerById(player.id);
-    } catch (err) {
-      await client.query("ROLLBACK");
-      throw err;
-    } finally {
-      client.release();
-    }
+    const result = await this.players.findOneAndUpdate(
+      { _id: player.id },
+      { $set: { username: player.username, level: player.level, coins: player.coins, inventory: player.inventory } },
+      { returnDocument: "after" }
+    );
+    if (!result) throw new ApiError(404, "Player not found");
+    return mapPlayer(result);
   }
 
   async listRewards(): Promise<Reward[]> {
-    const result = await this.pool.query("SELECT id, name, min_level, cost_coins FROM rewards ORDER BY id ASC");
-    return result.rows.map((row) => ({
-      id: row.id,
-      name: row.name,
-      minLevel: row.min_level,
-      costCoins: row.cost_coins,
-    }));
+    const docs = await this.rewards.find().sort({ _id: 1 }).toArray();
+    return docs.map(mapReward);
   }
 
   async getRewardById(rewardId: string): Promise<Reward> {
-    const result = await this.pool.query("SELECT id, name, min_level, cost_coins FROM rewards WHERE id = $1", [rewardId]);
-    if (result.rowCount === 0) {
-      throw new ApiError(404, "Reward not found");
-    }
-
-    const row = result.rows[0];
-    return {
-      id: row.id,
-      name: row.name,
-      minLevel: row.min_level,
-      costCoins: row.cost_coins,
-    };
+    const doc = await this.rewards.findOne({ _id: rewardId });
+    if (!doc) throw new ApiError(404, "Reward not found");
+    return mapReward(doc);
   }
 
   async createSession(playerId: string, now: Date): Promise<Session> {
     const token = uuid();
-    const result = await this.pool.query(
-      "INSERT INTO sessions(token, player_id, created_at) VALUES($1, $2, $3) RETURNING token, player_id, created_at",
-      [token, playerId, now.toISOString()]
-    );
-
+    await this.sessions.insertOne({ _id: token, playerId, createdAt: now });
     return {
-      token: result.rows[0].token,
-      playerId: result.rows[0].player_id,
-      createdAt: new Date(result.rows[0].created_at).toISOString(),
+      token,
+      playerId,
+      createdAt: now.toISOString()
     };
   }
 
   async getSessionByToken(token: string): Promise<Session> {
-    const result = await this.pool.query("SELECT token, player_id, created_at FROM sessions WHERE token = $1", [token]);
-    if (result.rowCount === 0) {
-      throw new ApiError(401, "Invalid token");
-    }
-
+    const doc = await this.sessions.findOne({ _id: token });
+    if (!doc) throw new ApiError(401, "Invalid token");
     return {
-      token: result.rows[0].token,
-      playerId: result.rows[0].player_id,
-      createdAt: new Date(result.rows[0].created_at).toISOString(),
+      token: doc._id,
+      playerId: doc.playerId,
+      createdAt: new Date(doc.createdAt).toISOString()
     };
   }
 
   async getClaimByIdempotencyKey(idempotencyKey: string): Promise<ClaimRecord | undefined> {
-    const result = await this.pool.query(
-      "SELECT player_id, reward_id, idempotency_key FROM reward_claims WHERE idempotency_key = $1",
-      [idempotencyKey]
-    );
-
-    if (result.rowCount === 0) {
-      return undefined;
-    }
-
-    return {
-      playerId: result.rows[0].player_id,
-      rewardId: result.rows[0].reward_id,
-      idempotencyKey: result.rows[0].idempotency_key,
-    };
+    const doc = await this.rewardClaims.findOne({ _id: idempotencyKey });
+    if (!doc) return undefined;
+    return { playerId: doc.playerId, rewardId: doc.rewardId, idempotencyKey: doc._id };
   }
 
   async saveClaim(record: ClaimRecord): Promise<ClaimRecord> {
-    await this.pool.query(
-      "INSERT INTO reward_claims(idempotency_key, player_id, reward_id) VALUES($1, $2, $3)",
-      [record.idempotencyKey, record.playerId, record.rewardId]
-    );
-
+    await this.rewardClaims.insertOne({ _id: record.idempotencyKey, playerId: record.playerId, rewardId: record.rewardId });
     return { ...record };
   }
 
@@ -173,101 +140,64 @@ export class DbStore {
       throw new ApiError(400, "Idempotency-Key header is required");
     }
 
-    const client = await this.pool.connect();
+    // Atomically reserve the idempotency key — unique _id prevents duplicates
+    let isNew = false;
     try {
-      await client.query("BEGIN");
+      await this.rewardClaims.insertOne({ _id: idempotencyKey, playerId, rewardId });
+      isNew = true;
+    } catch (err) {
+      if ((err as MongoError).code !== 11000) throw err;
+    }
 
-      const existing = await client.query(
-        "SELECT player_id, reward_id FROM reward_claims WHERE idempotency_key = $1 FOR UPDATE",
-        [idempotencyKey]
-      );
-
-      if (existing.rowCount) {
-        const record = existing.rows[0];
-        if (record.player_id !== playerId || record.reward_id !== rewardId) {
-          throw new ApiError(409, "Idempotency-Key already used with different payload");
-        }
-
-        await client.query("COMMIT");
-        return {
-          status: "duplicate",
-          player: await this.getPlayerById(playerId),
-          reward: await this.getRewardById(rewardId),
-        };
+    if (!isNew) {
+      const existing = await this.rewardClaims.findOne({ _id: idempotencyKey });
+      if (!existing || existing.playerId !== playerId || existing.rewardId !== rewardId) {
+        throw new ApiError(409, "Idempotency-Key already used with different payload");
       }
+      return {
+        status: "duplicate",
+        player: await this.getPlayerById(playerId),
+        reward: await this.getRewardById(rewardId)
+      };
+    }
 
-      const playerRes = await client.query("SELECT id, username, level, coins FROM players WHERE id = $1 FOR UPDATE", [playerId]);
-      if (!playerRes.rowCount) {
-        throw new ApiError(404, "Player not found");
-      }
+    // New claim — validate and atomically deduct coins + add item to inventory
+    try {
+      const reward = await this.getRewardById(rewardId);
+      const player = await this.getPlayerById(playerId);
 
-      const rewardRes = await client.query("SELECT id, name, min_level, cost_coins FROM rewards WHERE id = $1", [rewardId]);
-      if (!rewardRes.rowCount) {
-        throw new ApiError(404, "Reward not found");
-      }
-
-      const player = playerRes.rows[0];
-      const reward = rewardRes.rows[0];
-
-      if (player.level < reward.min_level) {
+      if (player.level < reward.minLevel) {
         throw new ApiError(422, "Player level too low for reward");
       }
-
-      if (player.coins < reward.cost_coins) {
+      if (player.coins < reward.costCoins) {
         throw new ApiError(422, "Insufficient balance for reward");
       }
 
-      await client.query("UPDATE players SET coins = coins - $1 WHERE id = $2", [reward.cost_coins, playerId]);
-      await client.query(
-        "INSERT INTO inventory(player_id, item_name) VALUES($1, $2) ON CONFLICT (player_id, item_name) DO NOTHING",
-        [playerId, reward.name]
-      );
-      await client.query(
-        "INSERT INTO reward_claims(idempotency_key, player_id, reward_id) VALUES($1, $2, $3)",
-        [idempotencyKey, playerId, rewardId]
+      const updated = await this.players.findOneAndUpdate(
+        { _id: playerId, coins: { $gte: reward.costCoins } },
+        { $inc: { coins: -reward.costCoins, [`inventory.${reward.name}`]: 1 } },
+        { returnDocument: "after" }
       );
 
-      await client.query("COMMIT");
+      if (!updated) {
+        throw new ApiError(422, "Insufficient balance for reward");
+      }
+
       return {
         status: "claimed",
-        player: await this.getPlayerById(playerId),
-        reward: {
-          id: reward.id,
-          name: reward.name,
-          minLevel: reward.min_level,
-          costCoins: reward.cost_coins,
-        },
+        player: mapPlayer(updated),
+        reward
       };
     } catch (err) {
-      await client.query("ROLLBACK");
+      // Roll back the claim reservation on error
+      await this.rewardClaims.deleteOne({ _id: idempotencyKey });
       throw err;
-    } finally {
-      client.release();
-    }
-  }
-
-  async withTransaction<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
-    const client = await this.pool.connect();
-    try {
-      await client.query("BEGIN");
-      const result = await fn(client);
-      await client.query("COMMIT");
-      return result;
-    } catch (err) {
-      await client.query("ROLLBACK");
-      throw err;
-    } finally {
-      client.release();
     }
   }
 
   async setPlayerCoins(playerId: string, coins: number): Promise<void> {
-    const result = await this.pool.query(
-      "UPDATE players SET coins = $1 WHERE id = $2",
-      [coins, playerId]
-    );
-
-    if (result.rowCount === 0) {
+    const result = await this.players.updateOne({ _id: playerId }, { $set: { coins } });
+    if (result.matchedCount === 0) {
       throw new ApiError(404, "Player not found");
     }
   }

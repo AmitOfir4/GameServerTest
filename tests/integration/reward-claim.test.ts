@@ -2,7 +2,7 @@ import { loadTestApp, loginAsNemo } from "../helpers/test-app";
 
 describe("Reward claim integration", () => {
   it("claims reward and returns duplicate for repeated idempotency key", async () => {
-    const { client } = loadTestApp();
+    const { client } = await loadTestApp();
     const auth = await loginAsNemo(client);
 
     const first = await client
@@ -24,7 +24,7 @@ describe("Reward claim integration", () => {
   });
 
   it("fails if idempotency key is missing", async () => {
-    const { client } = loadTestApp();
+    const { client } = await loadTestApp();
     const auth = await loginAsNemo(client);
 
     const response = await client
@@ -37,7 +37,7 @@ describe("Reward claim integration", () => {
   });
 
   it("returns 409 when same idempotency key is reused with different reward", async () => {
-    const { client } = loadTestApp();
+    const { client } = await loadTestApp();
     const auth = await loginAsNemo(client);
 
     await client
@@ -57,7 +57,7 @@ describe("Reward claim integration", () => {
   });
 
   it("returns 422 when player level is too low for reward", async () => {
-    const { client } = loadTestApp();
+    const { client } = await loadTestApp();
     // dory is level 3; goldenNetReward requires minLevel 5
     const loginRes = await client.post("/api/v1/auth/login").send({ username: "dory" });
     const { token, playerId } = loginRes.body;
@@ -73,7 +73,7 @@ describe("Reward claim integration", () => {
   });
 
   it("returns 422 when player has insufficient coins for reward", async () => {
-    const { client } = loadTestApp();
+    const { client } = await loadTestApp();
     // dory has 300 coins; goldenNetReward costs 800
     const loginRes = await client.post("/api/v1/auth/login").send({ username: "dory" });
     const { token } = loginRes.body;
@@ -96,7 +96,7 @@ describe("Reward claim integration", () => {
   });
 
   it("handles concurrent claims with same idempotency key gracefully", async () => {
-    const { client } = loadTestApp();
+    const { client } = await loadTestApp();
     const auth = await loginAsNemo(client);
 
     // Note: Node.js is single-threaded so these resolve sequentially.
@@ -122,7 +122,7 @@ describe("Reward claim integration", () => {
   });
 
   it("returns 400 for missing rewardId in body", async () => {
-    const { client } = loadTestApp();
+    const { client } = await loadTestApp();
     const auth = await loginAsNemo(client);
 
     const response = await client
@@ -135,7 +135,7 @@ describe("Reward claim integration", () => {
   });
 
   it("returns 404 for unknown rewardId", async () => {
-    const { client } = loadTestApp();
+    const { client } = await loadTestApp();
     const auth = await loginAsNemo(client);
 
     const response = await client

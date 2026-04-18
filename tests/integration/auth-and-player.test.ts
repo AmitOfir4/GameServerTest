@@ -2,7 +2,7 @@ import { loadTestApp, loginAsNemo } from "../helpers/test-app";
 
 describe("Auth + Player integration", () => {
   it("returns 400 on invalid login payload", async () => {
-    const { client } = loadTestApp();
+    const { client } = await loadTestApp();
 
     const response = await client.post("/api/v1/auth/login").send({});
 
@@ -11,7 +11,7 @@ describe("Auth + Player integration", () => {
   });
 
   it("logs in and fetches player with auth token", async () => {
-    const { client } = loadTestApp();
+    const { client } = await loadTestApp();
     const auth = await loginAsNemo(client);
 
     const playerResponse = await client
@@ -24,7 +24,7 @@ describe("Auth + Player integration", () => {
   });
 
   it("returns 401 for protected endpoints without token", async () => {
-    const { client } = loadTestApp();
+    const { client } = await loadTestApp();
 
     const response = await client.get("/api/v1/players/p1");
 
@@ -32,7 +32,7 @@ describe("Auth + Player integration", () => {
   });
 
   it("returns 401 when Authorization uses wrong scheme (Token instead of Bearer)", async () => {
-    const { client } = loadTestApp();
+    const { client } = await loadTestApp();
     const auth = await loginAsNemo(client);
 
     const response = await client
@@ -44,7 +44,7 @@ describe("Auth + Player integration", () => {
   });
 
   it("returns 401 when Authorization header has no token after Bearer", async () => {
-    const { client } = loadTestApp();
+    const { client } = await loadTestApp();
 
     const response = await client
       .get("/api/v1/players/p1")
@@ -54,7 +54,7 @@ describe("Auth + Player integration", () => {
   });
 
   it("returns 401 when Authorization header is a random string", async () => {
-    const { client } = loadTestApp();
+    const { client } = await loadTestApp();
 
     const response = await client
       .get("/api/v1/players/p1")
@@ -64,7 +64,7 @@ describe("Auth + Player integration", () => {
   });
 
   it("returns 401 when Bearer token is not a known session", async () => {
-    const { client } = loadTestApp();
+    const { client } = await loadTestApp();
 
     const response = await client
       .get("/api/v1/players/p1")
@@ -74,7 +74,7 @@ describe("Auth + Player integration", () => {
   });
 
   it("returns 401 for unknown player id (player not found)", async () => {
-    const { client } = loadTestApp();
+    const { client } = await loadTestApp();
     const auth = await loginAsNemo(client);
 
     const response = await client

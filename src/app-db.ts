@@ -1,7 +1,6 @@
 import express from "express";
-import { Pool } from "pg";
-import { runMigrations } from "./db/migrate";
-import { createPgPool } from "./db/pg";
+import { Db } from "mongodb";
+import { createMongoDb } from "./db/mongo";
 import { seedDatabase } from "./db/seed-db";
 import { DbStore } from "./db/db-store";
 import { errorHandler } from "./middleware/error-handler";
@@ -10,17 +9,18 @@ import { AppDependencies } from "./types";
 
 export interface DbAppConfig {
   connectionString: string;
+  dbName?: string;
   autoSeed?: boolean;
 }
 
 export async function createDbApp(config: DbAppConfig, deps: AppDependencies = {}) {
   const app = express();
-  const pool = createPgPool({ connectionString: config.connectionString });
-  const store = new DbStore(pool);
+  const { client, db } = await createMongoDb({ connectionString: config.connectionString, dbName: config.dbName });
+  const store = new DbStore(db);
 
-  await runMigrations(pool);
+  await store.setupIndexes();
   if (config.autoSeed) {
-    await seedDatabase(pool);
+    await seedDatabase(db);
   }
 
   const resolvedDeps: Required<AppDependencies> = {
@@ -34,13 +34,14 @@ export async function createDbApp(config: DbAppConfig, deps: AppDependencies = {
 
   return {
     app,
-    pool,
+    mongoClient: client,
+    mongoDb: db,
     close: async () => {
-      await pool.end();
+      await client.close();
     }
   };
 }
 
-export async function resetDb(pool: Pool): Promise<void> {
-  await seedDatabase(pool);
+export async function resetDb(db: Db): Promise<void> {
+  await seedDatabase(db);
 }

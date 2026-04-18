@@ -1,9 +1,9 @@
 import { createDbApp } from "../app-db";
 
 async function main() {
-  const connectionString = process.env.DATABASE_URL;
+  const connectionString = process.env.MONGODB_URI;
   if (!connectionString) {
-    throw new Error("DATABASE_URL is required");
+    throw new Error("MONGODB_URI is required");
   }
 
   const port = Number(process.env.PORT ?? 3001);
