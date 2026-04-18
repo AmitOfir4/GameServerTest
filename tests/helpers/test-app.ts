@@ -6,6 +6,7 @@ import { AppDependencies } from "../../src/types";
 // One container per Jest worker — shared across all tests in this worker.
 // Each loadTestApp() call uses a unique DB name so tests are fully isolated.
 let containerPromise: Promise<StartedMongoDBContainer> | null = null;
+const closeFns: Array<() => Promise<void>> = [];
 
 function getContainer(): Promise<StartedMongoDBContainer> {
   if (!containerPromise) {
@@ -19,9 +20,20 @@ export async function loadTestApp(deps: AppDependencies = {}) {
   const connectionString = container.getConnectionString();
   const dbName = `testdb_${Date.now()}_${Math.random().toString(36).slice(2)}`;
   const dbApp = await createDbApp({ connectionString, dbName, autoSeed: true }, deps);
+  closeFns.push(dbApp.close);
   const client = request(dbApp.app);
   return { app: dbApp.app, client, mongoDb: dbApp.mongoDb, close: dbApp.close };
 }
+
+afterAll(async () => {
+  await Promise.all(closeFns.map((fn) => fn()));
+  closeFns.length = 0;
+  if (containerPromise) {
+    const container = await containerPromise;
+    await container.stop();
+    containerPromise = null;
+  }
+});
 
 type PostCapableClient = {
   post: (url: string) => request.Test;
