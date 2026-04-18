@@ -74,7 +74,7 @@ export function apiRouter(store: DataStore, deps: Required<AppDependencies>): Ro
       throw new ApiError(401, "Unauthorized");
     }
 
-    const idempotencyKey = req.header("Idempotency-Key") || uuid();
+    const idempotencyKey = req.header("Idempotency-Key");
     if (!idempotencyKey) {
       throw new ApiError(400, "Idempotency-Key header is required");
     }

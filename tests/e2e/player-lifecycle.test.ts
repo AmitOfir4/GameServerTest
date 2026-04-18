@@ -28,6 +28,6 @@ describe("E2E player lifecycle", () => {
 
     expect(player.status).toBe(200);
     expect(player.body.coins).toBe(600);
-    expect(player.body.inventory).toContain("golden-net");
+    expect(player.body.inventory).toHaveProperty("golden-net");
   });
 });

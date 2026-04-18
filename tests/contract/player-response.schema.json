@@ -8,8 +8,8 @@
     "level": { "type": "integer" },
     "coins": { "type": "integer" },
     "inventory": {
-      "type": "array",
-      "items": { "type": "string" }
+      "type": "object",
+      "additionalProperties": { "type": "integer" }
     }
   },
   "additionalProperties": false
